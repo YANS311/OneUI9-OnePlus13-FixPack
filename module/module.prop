@@ -1,0 +1,6 @@
+id=oneui9_op13_fixpack
+name=OneUI 9 FixPack for OnePlus 13 (PJZ110 / dodge)
+version=v1.0.0
+versionCode=100
+author=YANS311
+description=Comprehensive daily-driver fix pack for OneUI 9.0 (Android 17) ports on OnePlus 13: WeChat/Kotlin CameraX fix, Dual Physical SIM Manager, CTC/CU/CMCC SMS & VoLTE IMS fixes, 0.3s CallBridge, 60fps + 9:16 Camera fix, and permanent Clock Seconds.

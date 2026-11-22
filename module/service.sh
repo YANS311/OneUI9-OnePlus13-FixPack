@@ -72,7 +72,9 @@ content update --uri 'content://com.sec.ims.settings/global#simslot1' --bind sms
 if [ -f "$MODS_DIR/imsservice.apk" ] && [ -f /system/priv-app/imsservice/imsservice.apk ]; then
     stealth_bind_mount "$MODS_DIR/imsservice.apk" /system/priv-app/imsservice/imsservice.apk 0644
     rm -f /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_0.xml /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_1.xml
-    killall com.sec.imsservice 2>/dev/null || true
+    for ims_pid in $(pidof com.sec.imsservice 2>/dev/null); do
+        kill -9 "$ims_pid" 2>/dev/null || true
+    done
 fi
 
 # 7. Ensure TGY cscfeature.xml mount (fallback if /optics mounted after post-fs-data)

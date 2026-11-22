@@ -9,7 +9,7 @@
 
 ---
 
-## ✨ `v1.2.0` 修复、硬件增强与隐蔽加固清单（真机实测验证）
+## ✨ `v1.2.1` 修复、硬件增强与隐蔽加固清单（真机实测验证）
 
 | 模块 | 解决的痛点 / 新增能力 | 技术根因与修复方案 |
 | :--- | :--- | :--- |
@@ -32,12 +32,12 @@
 ## 🛠️ 安装与使用
 
 ### 方式一：KernelSU 刷入模块（日常用户）
-1. 前往 [Releases](https://github.com/YANS311/OneUI9-OnePlus13-FixPack/releases) 下载 `OneUI9-OnePlus13-FixPack-v1.2.0.zip`；
-2. 若已在 PC 运行过补丁（或已暂存到 `/sdcard/Download/OneUI9_v1.2.0/`），直接在 **KernelSU Manager** 中刷入该模块，安装脚本会自动导入暂存补丁并清理早期旧热修复脚本；
+1. 前往 [Releases](https://github.com/YANS311/OneUI9-OnePlus13-FixPack/releases) 下载 `OneUI9-OnePlus13-FixPack-v1.2.1.zip`；
+2. 若已在 PC 运行过补丁（或已暂存到 `/sdcard/Download/OneUI9_v1.2.1/`），直接在 **KernelSU Manager**（或 Magisk）中刷入该模块，安装脚本会自动原子导入暂存补丁并清理早期旧热修复脚本；
 3. 重启手机，在 KernelSU 模块页点击本模块 **「打开」** 即可使用 WebUI 控制与隐蔽体检面板。
 
 ### 方式二：PC 端一键原位修补脚本（含 Binary + TGY CSC）
-> 本仓库不含任何三星版权二进制，脚本会从你自己的手机拉取原包，在本地完成全部修补与校验；若 ADB 具备 root（`uid=0`）将直接部署到 `/data/adb/oneui9_mods/`，若受 Play Integrity 伪装限制为非 root（`uid=2000`）则自动暂存至 `/sdcard/Download/OneUI9_v1.2.0/` 供 KernelSU 安装器接管。
+> 本仓库不含任何三星版权二进制，脚本会从你自己的手机拉取原包，在本地完成全部修补与校验；若 ADB 具备 root（`uid=0`）将直接部署到 `/data/adb/oneui9_mods/`，若受 Play Integrity 伪装限制为非 root（`uid=2000`）则自动暂存至 `/sdcard/Download/OneUI9_v1.2.1/` 供 KernelSU 安装器接管。
 
 ```bash
 python patchers/apply_via_adb.py --reboot

@@ -49,7 +49,7 @@ set_mmi_charging() {
 if [ -f "$PID_FILE" ]; then
     OLD_PID=$(tr -d '[:space:]' < "$PID_FILE" 2>/dev/null)
     if [ -n "$OLD_PID" ] && [ -d "/proc/$OLD_PID" ]; then
-        if grep -q "power_guard.sh" "/proc/$OLD_PID/cmdline" 2>/dev/null; then
+        if tr '\0' ' ' < "/proc/$OLD_PID/cmdline" 2>/dev/null | grep -q "power_guard.sh"; then
             exit 0
         fi
     fi

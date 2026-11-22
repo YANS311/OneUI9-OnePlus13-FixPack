@@ -356,14 +356,35 @@ class TestSystemUiSecondsPatcher(unittest.TestCase):
 class TestModuleAndSkillHygiene(unittest.TestCase):
     def test_module_prop_version_and_stealth_mounts(self):
         prop_text = (ROOT / "module" / "module.prop").read_text(encoding="utf-8")
-        self.assertIn("version=v1.2.0", prop_text)
-        self.assertIn("versionCode=120", prop_text)
+        self.assertIn("version=v1.2.1", prop_text)
+        self.assertIn("versionCode=121", prop_text)
 
         pfd = (ROOT / "module" / "post-fs-data.sh").read_text(encoding="utf-8")
         srv = (ROOT / "module" / "service.sh").read_text(encoding="utf-8")
         for script_text in (pfd, srv):
             self.assertIn("stealth_bind_mount", script_text)
             self.assertNotIn('mount -o bind "$MODS_DIR/', script_text)
+
+    def test_bugfix_regressions(self):
+        import re
+        cust = (ROOT / "module" / "customize.sh").read_text(encoding="utf-8")
+        self.assertIsNone(
+            re.search(r'>\s*"\$MODS_DIR/(?:privapp-permissions-[^"]+|floating_feature|camera-feature)\.xml"', cust),
+            "customize.sh must redirect XMLs to .tmp instead of truncating live .xml targets",
+        )
+        self.assertIn(".tmp", cust)
+        self.assertIn("mv -f", cust)
+
+        srv = (ROOT / "module" / "service.sh").read_text(encoding="utf-8")
+        self.assertNotIn("killall com.sec.imsservice", srv)
+        self.assertIn("pidof com.sec.imsservice", srv)
+
+        upd = (ROOT / "module" / "META-INF" / "com" / "google" / "android" / "update-binary").read_text(encoding="utf-8")
+        self.assertIn("install_module", upd)
+
+        for name in ("alert_slider.sh", "power_guard.sh"):
+            txt = (ROOT / "module" / "scripts" / name).read_text(encoding="utf-8")
+            self.assertIn("tr '\\0' ' '", txt)
 
     def test_lf_line_endings(self):
         exts = {".sh", ".html", ".prop", ".py"}

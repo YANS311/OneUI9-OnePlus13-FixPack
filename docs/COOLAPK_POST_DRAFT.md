@@ -1,6 +1,6 @@
-# 【酷安发帖草稿】一加 13（24G+1TB）手搓 OneUI 9.0（Android 17）主力机日用化全记录 + 开源 v1.2.0 一键套件
+# 【酷安发帖草稿】一加 13（24G+1TB）手搓 OneUI 9.0（Android 17）主力机日用化全记录 + 开源 v1.2.1 一键套件
 
-> **建议标题**：花一半的钱手搓“S26 Ultra 24G+1TB 6000mAh 特别版”！一加 13 刷 OneUI 9.0 v1.2.0 开源套件发布：防 Root/BL 检测隐蔽挂载＋体检面板＋三段式开关＋旁路直驱＋全三网 VoLTE 短信全修平
+> **建议标题**：花一半的钱手搓“S26 Ultra 24G+1TB 6000mAh 特别版”！一加 13 刷 OneUI 9.0 v1.2.1 开源套件发布：防 Root/BL 检测隐蔽挂载＋体检面板＋三段式开关＋旁路直驱＋全三网 VoLTE 短信全修平
 
 ---
 
@@ -39,5 +39,5 @@
 
 ### 📦 开源地址（GitHub Actions 自动打包，零版权夹带）
 - **GitHub 仓库**：`https://github.com/YANS311/OneUI9-OnePlus13-FixPack`
-- 含 **KernelSU v1.2.0 一键模块包（内置 WebUI 隐蔽体检，Release 直接下载）** + **PC 端一键 ADB 原位修补脚本** + **4 套 Agent Skills** + 完整技术原理。
+- 含 **KernelSU / Magisk v1.2.1 一键模块包（内置 WebUI 隐蔽体检，Release 直接下载）** + **PC 端一键 ADB 原位修补脚本** + **4 套 Agent Skills** + 完整技术原理。
 - 欢迎各位一加 13 刷 OneUI 9 的机友 Star / PR，一起把移植包打磨成完美主力机！

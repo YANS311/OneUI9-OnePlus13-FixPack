@@ -9,32 +9,56 @@ ui_print "************************************************"
 ui_print "  OneUI 9.0 FixPack for OnePlus 13 (PJZ110)"
 ui_print "************************************************"
 
-# 1. Generate clean eUICC permission XMLs (removes fake eSIM on Dual Physical SIM)
+# 1. Generate clean eUICC permission XMLs atomically (avoids truncating live bind-mounted inodes)
 if [ -f /system/etc/permissions/privapp-permissions-com.samsung.euicc.xml ]; then
-    sed '/android.hardware.telephony.euicc/d' /system/etc/permissions/privapp-permissions-com.samsung.euicc.xml > "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml"
-    ui_print "- Patched privapp-permissions-com.samsung.euicc.xml"
+    sed '/android.hardware.telephony.euicc/d' /system/etc/permissions/privapp-permissions-com.samsung.euicc.xml > "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml.tmp"
+    if [ -s "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml.tmp" ]; then
+        mv -f "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml.tmp" "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml"
+        ui_print "- Patched privapp-permissions-com.samsung.euicc.xml"
+    else
+        rm -f "$MODS_DIR/privapp-permissions-com.samsung.euicc.xml.tmp"
+        ui_print "! Skipped empty privapp-permissions-com.samsung.euicc.xml"
+    fi
 fi
 if [ -f /system/etc/permissions/privapp-permissions-com.samsung.euicc.mep.xml ]; then
-    sed '/android.hardware.telephony.euicc/d' /system/etc/permissions/privapp-permissions-com.samsung.euicc.mep.xml > "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml"
-    ui_print "- Patched privapp-permissions-com.samsung.euicc.mep.xml"
+    sed '/android.hardware.telephony.euicc/d' /system/etc/permissions/privapp-permissions-com.samsung.euicc.mep.xml > "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml.tmp"
+    if [ -s "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml.tmp" ]; then
+        mv -f "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml.tmp" "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml"
+        ui_print "- Patched privapp-permissions-com.samsung.euicc.mep.xml"
+    else
+        rm -f "$MODS_DIR/privapp-permissions-com.samsung.euicc.mep.xml.tmp"
+        ui_print "! Skipped empty privapp-permissions-com.samsung.euicc.mep.xml"
+    fi
 fi
 
-# 2. Generate clean floating_feature.xml (removes tsds2 eSIM slot-switch)
+# 2. Generate clean floating_feature.xml atomically (removes tsds2 eSIM slot-switch)
 FF_SRC="/vendor/etc/oneui9/floating_feature.xml"
 [ ! -f "$FF_SRC" ] && FF_SRC="/system/etc/floating_feature.xml"
 if [ -f "$FF_SRC" ]; then
-    sed '/SEC_FLOATING_FEATURE_COMMON_CONFIG_EMBEDDED_SIM_SLOTSWITCH/d' "$FF_SRC" > "$MODS_DIR/floating_feature.xml"
-    ui_print "- Patched floating_feature.xml (removed tsds2 eSIM slot switch)"
+    sed '/SEC_FLOATING_FEATURE_COMMON_CONFIG_EMBEDDED_SIM_SLOTSWITCH/d' "$FF_SRC" > "$MODS_DIR/floating_feature.xml.tmp"
+    if [ -s "$MODS_DIR/floating_feature.xml.tmp" ]; then
+        mv -f "$MODS_DIR/floating_feature.xml.tmp" "$MODS_DIR/floating_feature.xml"
+        ui_print "- Patched floating_feature.xml (removed tsds2 eSIM slot switch)"
+    else
+        rm -f "$MODS_DIR/floating_feature.xml.tmp"
+        ui_print "! Skipped empty floating_feature.xml"
+    fi
 fi
 
-# 3. Generate patched camera-feature.xml (unlock 60fps + fix 9:16 4000x2252 -> 3840x2160)
+# 3. Generate patched camera-feature.xml atomically (unlock 60fps + fix 9:16 4000x2252 -> 3840x2160)
 CF_SRC="/vendor/etc/oneui9/camera-feature.xml"
 [ ! -f "$CF_SRC" ] && CF_SRC="/system/cameradata/camera-feature.xml"
 if [ -f "$CF_SRC" ]; then
     sed -e '/_60FPS/s/value="false"/value="true"/g' \
         -e 's/value="4000x2252"/value="3840x2160"/g' \
-        "$CF_SRC" > "$MODS_DIR/camera-feature.xml"
-    ui_print "- Patched camera-feature.xml (60fps unlocked + 9:16 3840x2160)"
+        "$CF_SRC" > "$MODS_DIR/camera-feature.xml.tmp"
+    if [ -s "$MODS_DIR/camera-feature.xml.tmp" ]; then
+        mv -f "$MODS_DIR/camera-feature.xml.tmp" "$MODS_DIR/camera-feature.xml"
+        ui_print "- Patched camera-feature.xml (60fps unlocked + 9:16 3840x2160)"
+    else
+        rm -f "$MODS_DIR/camera-feature.xml.tmp"
+        ui_print "! Skipped empty camera-feature.xml"
+    fi
 fi
 
 # 4. Install hardened callbridge_auto.sh + hardware daemons + stealth library
@@ -62,11 +86,11 @@ elif ! grep -q '^STEALTH_PROPS=' "$MODS_DIR/power.conf" 2>/dev/null; then
     ui_print "- Enabled STEALTH_PROPS=1 in existing power.conf"
 fi
 
-# 6. Install staged binary/CSC patches if present in /sdcard/Download/OneUI9_v1.1.0 or v1.2.0
-for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0; do
+# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0, v1.2.0 or v1.2.1
+for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1; do
     for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
-        if [ -f "$STAGE_DIR/$f" ]; then
-            cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f"
+        if [ -s "$STAGE_DIR/$f" ]; then
+            cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f.tmp" && mv -f "$MODS_DIR/$f.tmp" "$MODS_DIR/$f"
             chmod 0644 "$MODS_DIR/$f"
             ui_print "- Installed staged patch from ${STAGE_DIR##*/}: $f"
         fi

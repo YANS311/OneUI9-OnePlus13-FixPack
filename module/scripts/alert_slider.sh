@@ -90,7 +90,7 @@ apply_tri_state() {
 if [ -f "$PID_FILE" ]; then
     OLD_PID=$(tr -d '[:space:]' < "$PID_FILE" 2>/dev/null)
     if [ -n "$OLD_PID" ] && [ -d "/proc/$OLD_PID" ]; then
-        if grep -q "alert_slider.sh" "/proc/$OLD_PID/cmdline" 2>/dev/null; then
+        if tr '\0' ' ' < "/proc/$OLD_PID/cmdline" 2>/dev/null | grep -q "alert_slider.sh"; then
             exit 0
         fi
     fi

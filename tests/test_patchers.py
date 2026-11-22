@@ -353,5 +353,40 @@ class TestSystemUiSecondsPatcher(unittest.TestCase):
                 self.assertEqual(z.read("classes3.dex"), out_dex)
 
 
+class TestModuleAndSkillHygiene(unittest.TestCase):
+    def test_module_prop_version_and_stealth_mounts(self):
+        prop_text = (ROOT / "module" / "module.prop").read_text(encoding="utf-8")
+        self.assertIn("version=v1.2.0", prop_text)
+        self.assertIn("versionCode=120", prop_text)
+
+        pfd = (ROOT / "module" / "post-fs-data.sh").read_text(encoding="utf-8")
+        srv = (ROOT / "module" / "service.sh").read_text(encoding="utf-8")
+        for script_text in (pfd, srv):
+            self.assertIn("stealth_bind_mount", script_text)
+            self.assertNotIn('mount -o bind "$MODS_DIR/', script_text)
+
+    def test_lf_line_endings(self):
+        exts = {".sh", ".html", ".prop", ".py"}
+        for base in (ROOT / "module", ROOT / "patchers"):
+            for p in base.rglob("*"):
+                if p.is_file() and p.suffix.lower() in exts:
+                    self.assertNotIn(b"\r\n", p.read_bytes(), f"CRLF found in {p}")
+
+    def test_skills_frontmatter(self):
+        expected_skills = (
+            "android-rom-port-debugger",
+            "dex-inplace-patcher",
+            "oneplus-arb-safe-flasher",
+            "android-root-bl-stealth",
+        )
+        for name in expected_skills:
+            skill_md = ROOT / "skills" / name / "SKILL.md"
+            self.assertTrue(skill_md.is_file(), f"Missing {skill_md}")
+            text = skill_md.read_text(encoding="utf-8")
+            self.assertTrue(text.startswith("---\n"), f"Missing YAML frontmatter in {skill_md}")
+            self.assertIn(f"name: {name}", text)
+            self.assertIn("description:", text)
+
+
 if __name__ == "__main__":
     unittest.main()

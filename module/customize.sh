@@ -37,8 +37,8 @@ if [ -f "$CF_SRC" ]; then
     ui_print "- Patched camera-feature.xml (60fps unlocked + 9:16 3840x2160)"
 fi
 
-# 4. Install hardened callbridge_auto.sh + hardware daemons (Alert Slider & Power Guard)
-for s in callbridge_auto.sh alert_slider.sh power_guard.sh; do
+# 4. Install hardened callbridge_auto.sh + hardware daemons + stealth library
+for s in callbridge_auto.sh alert_slider.sh power_guard.sh stealth_lib.sh; do
     if [ -f "$MODPATH/scripts/$s" ]; then
         cp -f "$MODPATH/scripts/$s" "$MODS_DIR/$s"
         chmod 0755 "$MODS_DIR/$s"
@@ -53,19 +53,24 @@ BYPASS_MODE=0
 CHARGE_LIMIT=0
 RESUME_DELTA=5
 SLIDER_ENABLED=1
+STEALTH_PROPS=1
 EOF
     chmod 0644 "$MODS_DIR/power.conf"
     ui_print "- Initialized default power.conf"
+elif ! grep -q '^STEALTH_PROPS=' "$MODS_DIR/power.conf" 2>/dev/null; then
+    printf '\nSTEALTH_PROPS=1\n' >> "$MODS_DIR/power.conf"
+    ui_print "- Enabled STEALTH_PROPS=1 in existing power.conf"
 fi
 
-# 6. Install staged binary/CSC patches if present in /sdcard/Download/OneUI9_v1.1.0/
-STAGE_DIR="/sdcard/Download/OneUI9_v1.1.0"
-for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
-    if [ -f "$STAGE_DIR/$f" ]; then
-        cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f"
-        chmod 0644 "$MODS_DIR/$f"
-        ui_print "- Installed staged patch: $f"
-    fi
+# 6. Install staged binary/CSC patches if present in /sdcard/Download/OneUI9_v1.1.0 or v1.2.0
+for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0; do
+    for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
+        if [ -f "$STAGE_DIR/$f" ]; then
+            cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f"
+            chmod 0644 "$MODS_DIR/$f"
+            ui_print "- Installed staged patch from ${STAGE_DIR##*/}: $f"
+        fi
+    done
 done
 
 # 7. Clean up legacy standalone boot scripts from early hotfixes to prevent double execution

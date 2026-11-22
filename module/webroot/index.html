@@ -198,7 +198,7 @@
         <h1>OneUI 9 FixPack 控制台</h1>
         <div class="sub">OnePlus 13 (PJZ110) · 一加硬件适配与日常补丁</div>
       </div>
-      <span class="badge">v1.1.0</span>
+      <span class="badge">v1.2.0</span>
     </header>
 
     <div id="env-warn"></div>
@@ -266,6 +266,26 @@
           <input type="checkbox" id="chk-slider" />
           <span class="slider"></span>
         </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <span>Root / BL 环境隐蔽体检与加固</span>
+        <button class="btn" id="btn-apply-stealth">立即加固属性</button>
+      </div>
+      <div class="row">
+        <div>
+          <div class="row-title">安全 BL / Debug 属性自动加固 (STEALTH_PROPS)</div>
+          <div class="row-desc">仅修正 vbmeta / verity / warranty / persist.debuggable，不动 DFE</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="chk-stealth" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="check-list" id="stealth-list" style="margin-top: 8px;">
+        <div class="check-item"><span>正在读取环境体检数据...</span></div>
       </div>
     </section>
 
@@ -353,6 +373,49 @@
         ).join('');
       }
 
+      function renderStealth(d) {
+        const blOk =
+          d.vbs === 'green' &&
+          d.locked === '1' &&
+          d.vbmeta === 'locked' &&
+          d.verity === 'enforcing' &&
+          d.wbit === '0';
+        const blVal = blOk
+          ? 'green · locked · enforcing · w=0'
+          : `vbs=${d.vbs || '-'} lock=${d.locked || '-'} vb=${d.vbmeta || '-'} vt=${d.verity || '-'} w=${d.wbit || '-'}`;
+        const dbgOk = d.dbg === '0' && d.p_dbg === '0';
+        const dbgVal = dbgOk ? '安全 (0 / 0)' : `泄露 (ro=${d.dbg || '?'}, persist=${d.p_dbg || '?'})`;
+        const fpOk = d.fixpack_adb_mounts === '0' && d.rw_sys_mounts === '0';
+        const fpVal = fpOk
+          ? `无 /adb 暴露 · 只读 (${d.fixpack_rt_mounts || '0'})`
+          : `警告 (adb=${d.fixpack_adb_mounts || '?'}, rw=${d.rw_sys_mounts || '?'})`;
+        const leaks = [];
+        if (Number(d.zygisk_leak || 0) > 0) leaks.push('zygisk_lsposed');
+        if (Number(d.bindhosts_leak || 0) > 0) leaks.push('bindhosts');
+        const thirdOk = leaks.length === 0;
+        const thirdVal = thirdOk ? '无已知泄露' : `暴露: ${leaks.join(', ')}`;
+        const susfsVal = d.susfs === '1' ? '已检测 (自动加挂)' : '未集成 (原厂 6.6.66 内核)';
+        const cryptoVal =
+          d.crypto === 'unsupported'
+            ? 'unsupported (DFE 正常特征，切勿强改)'
+            : d.crypto || '未知';
+
+        const rows = [
+          ['Verified Boot & BL 锁', blVal, blOk ? 'tag-ok' : 'tag-off'],
+          ['调试属性 (debuggable)', dbgVal, dbgOk ? 'tag-ok' : 'tag-off'],
+          ['FixPack 挂载隐蔽度', fpVal, fpOk ? 'tag-ok' : 'tag-off'],
+          ['第三方模块挂载告警', thirdVal, thirdOk ? 'tag-ok' : 'tag-off'],
+          ['SUSFS 内核支持', susfsVal, d.susfs === '1' ? 'tag-ok' : 'row-desc'],
+          ['DFE 加密状态', cryptoVal, 'row-desc']
+        ];
+        document.getElementById('stealth-list').innerHTML = rows
+          .map(
+            ([label, val, cls]) =>
+              `<div class="check-item"><span>${label}</span><span class="${cls}">${val}</span></div>`
+          )
+          .join('');
+      }
+
       async function refresh() {
         const warn = document.getElementById('env-warn');
         const cmd = [
@@ -372,7 +435,8 @@
           'sec=$(grep -q SystemUI.apk /proc/mounts && echo 1 || echo 0)',
           'csc=$(grep -q cscfeature.xml /proc/mounts && echo 1 || echo 0)',
           'cb=$(grep -q callbridge_auto.sh /proc/mounts && echo 1 || echo 0)',
-          'printf "cap=%s\\ntemp=%s\\nstat=%s\\nmmi=%s\\ntri=%s\\nbypass=%s\\nlimit=%s\\nslider=%s\\npg=%s\\nal=%s\\ncamerax=%s\\nsms=%s\\nims=%s\\nsec=%s\\ncsc=%s\\ncb=%s\\n" "$cap" "$temp" "$stat" "$mmi" "$tri" "$bypass" "$limit" "$slider" "$pg" "$al" "$camerax" "$sms" "$ims" "$sec" "$csc" "$cb"'
+          'printf "cap=%s\\ntemp=%s\\nstat=%s\\nmmi=%s\\ntri=%s\\nbypass=%s\\nlimit=%s\\nslider=%s\\npg=%s\\nal=%s\\ncamerax=%s\\nsms=%s\\nims=%s\\nsec=%s\\ncsc=%s\\ncb=%s\\n" "$cap" "$temp" "$stat" "$mmi" "$tri" "$bypass" "$limit" "$slider" "$pg" "$al" "$camerax" "$sms" "$ims" "$sec" "$csc" "$cb"',
+          'if [ -f /data/adb/oneui9_mods/stealth_lib.sh ]; then sh /data/adb/oneui9_mods/stealth_lib.sh audit 2>/dev/null || true; elif [ -f /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh ]; then sh /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh audit 2>/dev/null || true; fi'
         ].join('; ');
 
         try {
@@ -394,11 +458,13 @@
 
           document.getElementById('chk-bypass').checked = d.bypass === '1';
           document.getElementById('chk-slider').checked = d.slider !== '0';
+          document.getElementById('chk-stealth').checked = d.stealth_props !== '0';
 
           const lim = String(Number(d.limit || 0));
           document.querySelectorAll('#limit-pills .pill').forEach((p) => {
             p.classList.toggle('active', p.dataset.limit === lim);
           });
+          renderStealth(d);
           renderChecks(d);
         } catch (err) {
           warn.style.display = 'block';
@@ -463,6 +529,37 @@
           refresh();
         } catch (err) {
           toast('同步失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('chk-stealth').addEventListener('change', async (e) => {
+        const on = e.target.checked ? '1' : '0';
+        try {
+          await saveConf({ STEALTH_PROPS: on });
+          if (on === '1') {
+            await ksuExec(
+              'if [ -f /data/adb/oneui9_mods/stealth_lib.sh ]; then sh /data/adb/oneui9_mods/stealth_lib.sh apply-props; else sh /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh apply-props; fi'
+            );
+            toast('BL / Debug 安全属性加固已启用并执行');
+            refresh();
+          } else {
+            toast('已关闭开机自动属性加固（下次重启生效）');
+          }
+        } catch (err) {
+          toast('设置失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('btn-apply-stealth').addEventListener('click', async () => {
+        try {
+          await saveConf({ STEALTH_PROPS: '1' });
+          await ksuExec(
+            'if [ -f /data/adb/oneui9_mods/stealth_lib.sh ]; then sh /data/adb/oneui9_mods/stealth_lib.sh apply-props; else sh /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh apply-props; fi'
+          );
+          toast('已执行 BL / Debug 安全属性加固');
+          refresh();
+        } catch (err) {
+          toast('加固失败: ' + err.message);
         }
       });
 

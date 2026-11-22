@@ -70,6 +70,11 @@ content update --uri 'content://com.sec.ims.settings/global#simslot1' --bind sms
 
 # 6. Late-mount patched imsservice.apk (CMCC + CTC + CU dbr_timer=0 & use_precondition=false)
 if [ -f "$MODS_DIR/imsservice.apk" ] && [ -f /system/priv-app/imsservice/imsservice.apk ]; then
+    for ims_pid in $(pidof com.sec.imsservice 2>/dev/null); do
+        kill -9 "$ims_pid" 2>/dev/null || true
+    done
+    umount -l /vendor/etc/oneui9/imsservice.apk 2>/dev/null || true
+    umount -l /system/priv-app/imsservice/imsservice.apk 2>/dev/null || true
     stealth_bind_mount "$MODS_DIR/imsservice.apk" /system/priv-app/imsservice/imsservice.apk 0644
     rm -f /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_0.xml /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_1.xml
     for ims_pid in $(pidof com.sec.imsservice 2>/dev/null); do
@@ -77,13 +82,17 @@ if [ -f "$MODS_DIR/imsservice.apk" ] && [ -f /system/priv-app/imsservice/imsserv
     done
 fi
 
-# 7. Ensure TGY cscfeature.xml mount (fallback if /optics mounted after post-fs-data)
+# 7. Ensure TGY cscfeature.xml mount & shared peer lock (fallback if /optics mounted after post-fs-data)
 if [ -f "$MODS_DIR/cscfeature.xml" ] && [ -f /optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
     if ! grep -q '/optics/configs/carriers/TGY/conf/system/cscfeature.xml' /proc/mounts 2>/dev/null; then
         stealth_bind_mount "$MODS_DIR/cscfeature.xml" /optics/configs/carriers/TGY/conf/system/cscfeature.xml 0644
     else
         mount -o remount,ro,bind /optics/configs/carriers/TGY/conf/system/cscfeature.xml 2>/dev/null || true
         susfs_hide_mount /optics/configs/carriers/TGY/conf/system/cscfeature.xml
+    fi
+    if [ -e /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
+        mount -o remount,ro,bind /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml 2>/dev/null || true
+        susfs_hide_mount /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml
     fi
 fi
 

@@ -96,10 +96,11 @@ stealth_bind_mount() {
     chmod "$file_mode" "$rt_file" 2>/dev/null || true
     chcon u:object_r:system_file:s0 "$rt_file" 2>/dev/null || true
 
-    umount "$target_path" 2>/dev/null || true
-    mount -o bind "$rt_file" "$target_path" || return 1
-    mount -o remount,ro,bind "$target_path" 2>/dev/null || true
-    susfs_hide_mount "$target_path"
+    real_target=$(realpath "$target_path" 2>/dev/null || printf '%s' "$target_path")
+    umount -l "$real_target" 2>/dev/null || umount "$real_target" 2>/dev/null || true
+    mount -o bind "$rt_file" "$real_target" || return 1
+    mount -o remount,ro,bind "$real_target" 2>/dev/null || true
+    susfs_hide_mount "$real_target"
 }
 
 count_mount_pat() {

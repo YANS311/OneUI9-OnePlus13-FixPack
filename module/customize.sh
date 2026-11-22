@@ -86,8 +86,8 @@ elif ! grep -q '^STEALTH_PROPS=' "$MODS_DIR/power.conf" 2>/dev/null; then
     ui_print "- Enabled STEALTH_PROPS=1 in existing power.conf"
 fi
 
-# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0, v1.2.0 or v1.2.1
-for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1; do
+# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0 .. v1.2.2
+for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1 /sdcard/Download/OneUI9_v1.2.2; do
     for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
         if [ -s "$STAGE_DIR/$f" ]; then
             cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f.tmp" && mv -f "$MODS_DIR/$f.tmp" "$MODS_DIR/$f"

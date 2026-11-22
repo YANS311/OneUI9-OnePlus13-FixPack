@@ -48,4 +48,8 @@ fi
 # 6. Stealth-mount enhanced plaintext TGY cscfeature.xml (Call Recording, 50Hz, Network Speed, App Lock)
 if [ -f "$MODS_DIR/cscfeature.xml" ] && [ -f /optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
     stealth_bind_mount "$MODS_DIR/cscfeature.xml" /optics/configs/carriers/TGY/conf/system/cscfeature.xml 0644
+    if [ -e /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
+        mount -o remount,ro,bind /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml 2>/dev/null || true
+        susfs_hide_mount /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml
+    fi
 fi

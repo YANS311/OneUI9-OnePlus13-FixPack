@@ -28,8 +28,10 @@ find_slider_dev() {
         /^N: Name=/ { matched = ($0 ~ /oplus,hall_tri_state_key|tri_state_key/) }
         matched && /^H: Handlers=/ {
             for (i = 1; i <= NF; i++) {
-                if ($i ~ /^event[0-9]+$/) {
-                    printf "/dev/input/%s", $i
+                tok = $i
+                sub(/^Handlers=/, "", tok)
+                if (tok ~ /^event[0-9]+$/) {
+                    printf "/dev/input/%s", tok
                     exit
                 }
             }

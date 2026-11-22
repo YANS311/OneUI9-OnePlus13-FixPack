@@ -26,7 +26,7 @@ jobs:
 
       - name: Run ShellCheck on module shell scripts
         run: |
-          shellcheck -S warning module/post-fs-data.sh module/service.sh module/uninstall.sh module/scripts/callbridge_auto.sh
+          shellcheck -S warning module/post-fs-data.sh module/service.sh module/uninstall.sh module/scripts/callbridge_auto.sh module/scripts/alert_slider.sh module/scripts/power_guard.sh
 
       - name: Syntax check customize.sh
         run: |

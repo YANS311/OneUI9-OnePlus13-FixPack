@@ -37,18 +37,47 @@ if [ -f "$CF_SRC" ]; then
     ui_print "- Patched camera-feature.xml (60fps unlocked + 9:16 3840x2160)"
 fi
 
-# 4. Install hardened callbridge_auto.sh (0.3s fast pickup + race-free relay)
-if [ -f "$MODPATH/scripts/callbridge_auto.sh" ]; then
-    cp -f "$MODPATH/scripts/callbridge_auto.sh" "$MODS_DIR/callbridge_auto.sh"
-    chmod 0755 "$MODS_DIR/callbridge_auto.sh"
-    ui_print "- Installed hardened callbridge_auto.sh"
+# 4. Install hardened callbridge_auto.sh + hardware daemons (Alert Slider & Power Guard)
+for s in callbridge_auto.sh alert_slider.sh power_guard.sh; do
+    if [ -f "$MODPATH/scripts/$s" ]; then
+        cp -f "$MODPATH/scripts/$s" "$MODS_DIR/$s"
+        chmod 0755 "$MODS_DIR/$s"
+        ui_print "- Installed $s"
+    fi
+done
+
+# 5. Initialize power.conf (preserve user preferences across upgrades)
+if [ ! -f "$MODS_DIR/power.conf" ]; then
+    cat <<'EOF' > "$MODS_DIR/power.conf"
+BYPASS_MODE=0
+CHARGE_LIMIT=0
+RESUME_DELTA=5
+SLIDER_ENABLED=1
+EOF
+    chmod 0644 "$MODS_DIR/power.conf"
+    ui_print "- Initialized default power.conf"
 fi
 
-# Fix permissions & SELinux labels
-chmod 0644 "$MODS_DIR"/*.xml 2>/dev/null || true
-chcon -R u:object_r:system_file:s0 "$MODS_DIR" 2>/dev/null || true
-chmod 0755 "$MODPATH/post-fs-data.sh" "$MODPATH/service.sh" "$MODPATH/uninstall.sh" 2>/dev/null || true
+# 6. Install staged binary/CSC patches if present in /sdcard/Download/OneUI9_v1.1.0/
+STAGE_DIR="/sdcard/Download/OneUI9_v1.1.0"
+for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
+    if [ -f "$STAGE_DIR/$f" ]; then
+        cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f"
+        chmod 0644 "$MODS_DIR/$f"
+        ui_print "- Installed staged patch: $f"
+    fi
+done
 
+# 7. Clean up legacy standalone boot scripts from early hotfixes to prevent double execution
+rm -f /data/adb/post-fs-data.d/oneui9_camerax_fix.sh /data/adb/service.d/oneui9_cam60.sh
+
+# Fix permissions & SELinux labels
+chmod 0644 "$MODS_DIR"/*.xml "$MODS_DIR"/*.conf 2>/dev/null || true
+chmod 0755 "$MODS_DIR"/*.sh 2>/dev/null || true
+chcon -R u:object_r:system_file:s0 "$MODS_DIR" 2>/dev/null || true
+chmod 0755 "$MODPATH/post-fs-data.sh" "$MODPATH/service.sh" "$MODPATH/uninstall.sh" "$MODPATH/scripts"/*.sh 2>/dev/null || true
+
+ui_print "- KernelSU WebUI dashboard is ready: tap 'Open' on the module card!"
 ui_print "- Note: For DEX binary patches (SMS v3, CTC/CU VoLTE, Clock Seconds),"
 ui_print "  run 'python patchers/apply_via_adb.py' from PC once, then reboot."
 ui_print "- Done! Reboot to apply all changes."

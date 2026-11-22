@@ -56,3 +56,24 @@ if [ -f "$MODS_DIR/imsservice.apk" ] && [ -f /system/priv-app/imsservice/imsserv
     rm -f /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_0.xml /data/user_de/0/com.sec.imsservice/shared_prefs/imsprofile_1.xml
     killall com.sec.imsservice 2>/dev/null || true
 fi
+
+# 7. Ensure TGY cscfeature.xml mount (fallback if /optics mounted after post-fs-data)
+if [ -f "$MODS_DIR/cscfeature.xml" ] && [ -f /optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
+    if ! grep -q '/optics/configs/carriers/TGY/conf/system/cscfeature.xml' /proc/mounts 2>/dev/null; then
+        mount -o bind "$MODS_DIR/cscfeature.xml" /optics/configs/carriers/TGY/conf/system/cscfeature.xml
+    fi
+fi
+
+# 8. Start OnePlus 13 hardware daemons (0% idle CPU Alert Slider + Bypass Charging Power Guard)
+MODDIR=${0%/*}
+if [ -x "$MODDIR/scripts/alert_slider.sh" ]; then
+    nohup "$MODDIR/scripts/alert_slider.sh" >/dev/null 2>&1 &
+elif [ -x "$MODS_DIR/alert_slider.sh" ]; then
+    nohup "$MODS_DIR/alert_slider.sh" >/dev/null 2>&1 &
+fi
+
+if [ -x "$MODDIR/scripts/power_guard.sh" ]; then
+    nohup "$MODDIR/scripts/power_guard.sh" >/dev/null 2>&1 &
+elif [ -x "$MODS_DIR/power_guard.sh" ]; then
+    nohup "$MODS_DIR/power_guard.sh" >/dev/null 2>&1 &
+fi

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>OneUI 9 FixPack 控制台</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card: #141923;
+      --card-border: #232c3d;
+      --text: #eef2ff;
+      --muted: #8b98b1;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: 16px 14px 36px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: 0.2px; }
+    .badge {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-glow);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      font-weight: 600;
+    }
+    .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 0 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .stat-val { font-size: 17px; font-weight: 700; margin-top: 3px; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .row + .row { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+    .row-title { font-size: 14px; font-weight: 600; }
+    .row-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #2b3548;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+    input:checked + .slider { background: var(--accent); }
+    input:checked + .slider::before { transform: translateX(20px); }
+    .pills {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pill {
+      background: #1c2433;
+      color: #cbd5e1;
+      border: 1px solid #2b364b;
+      border-radius: 10px;
+      padding: 9px 4px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+    }
+    .pill.active {
+      background: var(--accent);
+      border-color: #60a5fa;
+      color: #fff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:active { transform: scale(0.97); }
+    .check-list { display: flex; flex-direction: column; gap: 7px; }
+    .check-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+    .tag-ok { color: var(--ok); font-weight: 700; font-size: 12px; }
+    .tag-off { color: var(--warn); font-weight: 700; font-size: 12px; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 99;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    #env-warn {
+      display: none;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fcd34d;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>OneUI 9 FixPack 控制台</h1>
+        <div class="sub">OnePlus 13 (PJZ110) · 一加硬件适配与日常补丁</div>
+      </div>
+      <span class="badge">v1.1.0</span>
+    </header>
+
+    <div id="env-warn"></div>
+
+    <section class="card">
+      <div class="card-title">
+        <span>实时硬件遥测</span>
+        <button class="btn" id="btn-refresh">刷新</button>
+      </div>
+      <div class="grid">
+        <div class="stat">
+          <div class="stat-label">电池电量 / 温度</div>
+          <div class="stat-val" id="val-bat">--% / --°C</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">充电链路状态</div>
+          <div class="stat-val" id="val-chg">--</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">三段式开关挡位</div>
+          <div class="stat-val" id="val-tri">--</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">守护进程</div>
+          <div class="stat-val" id="val-daemons">--</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span>硬件电源与旁路供电</span></div>
+      <div class="row">
+        <div>
+          <div class="row-title">直驱旁路供电 (Bypass Charging)</div>
+          <div class="row-desc">拉低 <code>mmi_charging_enable</code>，游戏/插电不充电池</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="chk-bypass" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <div class="row-title">充电上限保护 (含 5% 迟滞防抖)</div>
+        <div class="row-desc">达到阈值停止对电芯充电，降至阈值 - 5% 后恢复</div>
+        <div class="pills" id="limit-pills">
+          <div class="pill" data-limit="0">关闭</div>
+          <div class="pill" data-limit="80">80%</div>
+          <div class="pill" data-limit="85">85%</div>
+          <div class="pill" data-limit="90">90%</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <span>物理三段式开关映射</span>
+        <button class="btn" id="btn-sync-slider">立即同步 + 震感测试</button>
+      </div>
+      <div class="row">
+        <div>
+          <div class="row-title">事件驱动三段式开关 (0% 轮询功耗)</div>
+          <div class="row-desc">上静音 / 中震动 / 下响铃，并联动 X 轴线性马达震感</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="chk-slider" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span>OneUI 9 修复项生效状态</span></div>
+      <div class="check-list" id="patch-list">
+        <div class="check-item"><span>正在读取系统挂载状态...</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      const CONF = '/data/adb/oneui9_mods/power.conf';
+      const MMI = '/sys/class/oplus_chg/battery/mmi_charging_enable';
+
+      function toast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(window.__tTimer);
+        window.__tTimer = setTimeout(() => el.classList.remove('show'), 2000);
+      }
+
+      function ksuExec(cmd) {
+        return new Promise((resolve, reject) => {
+          if (typeof window.ksu === 'undefined' || typeof window.ksu.exec !== 'function') {
+            reject(new Error('非 KernelSU WebUI 环境，无法调用 root 执行接口'));
+            return;
+          }
+          const cb = '__ksu_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+          window[cb] = (errno, stdout, stderr) => {
+            delete window[cb];
+            if (errno !== 0) {
+              reject(new Error((stderr || '').trim() || ('exit ' + errno)));
+            } else {
+              resolve(stdout || '');
+            }
+          };
+          try {
+            window.ksu.exec(cmd, '{}', cb);
+          } catch (e) {
+            delete window[cb];
+            reject(e);
+          }
+        });
+      }
+
+      async function saveConf(kv) {
+        const lines = [];
+        for (const [k, v] of Object.entries(kv)) {
+          lines.push(
+            `grep -q '^${k}=' ${CONF} 2>/dev/null && sed -i 's/^${k}=.*/${k}=${v}/' ${CONF} || echo '${k}=${v}' >> ${CONF}`
+          );
+        }
+        const script = [
+          'mkdir -p /data/adb/oneui9_mods',
+          `touch ${CONF}`,
+          ...lines,
+          `chmod 0644 ${CONF}`
+        ].join(' && ');
+        await ksuExec(script);
+      }
+
+      function renderTri(code) {
+        if (code === '1') return '1 · 静音';
+        if (code === '2') return '2 · 震动';
+        if (code === '3') return '3 · 响铃';
+        return code || '未知';
+      }
+
+      function renderChecks(d) {
+        const items = [
+          ['微信/Kotlin CameraX 伪库修复', d.camerax === '1'],
+          ['telephony-common SMS v3 修复', d.sms === '1'],
+          ['imsservice 电信/联通 VoLTE 修复', d.ims === '1'],
+          ['SystemUI 状态栏永久秒数', d.sec === '1'],
+          ['TGY CSC 明文增强 (通话录音/网速)', d.csc === '1'],
+          ['CallBridge 0.3s 极速接听', d.cb === '1']
+        ];
+        document.getElementById('patch-list').innerHTML = items.map(([name, ok]) =>
+          `<div class="check-item"><span>${name}</span><span class="${ok ? 'tag-ok' : 'tag-off'}">${ok ? '已激活' : '未启用'}</span></div>`
+        ).join('');
+      }
+
+      async function refresh() {
+        const warn = document.getElementById('env-warn');
+        const cmd = [
+          'cap=$(cat /sys/class/power_supply/battery/capacity 2>/dev/null || echo 0)',
+          'temp=$(cat /sys/class/power_supply/battery/temp 2>/dev/null || echo 0)',
+          'stat=$(cat /sys/class/power_supply/battery/status 2>/dev/null || echo Unknown)',
+          `mmi=$(cat ${MMI} 2>/dev/null || echo -1)`,
+          'tri=$(tr -d "[:space:]" < /proc/tristatekey/tri_state 2>/dev/null || echo ?)',
+          `bypass=$(awk -F= '/^BYPASS_MODE=/{print $2; exit}' ${CONF} 2>/dev/null || echo 0)`,
+          `limit=$(awk -F= '/^CHARGE_LIMIT=/{print $2; exit}' ${CONF} 2>/dev/null || echo 0)`,
+          `slider=$(awk -F= '/^SLIDER_ENABLED=/{print $2; exit}' ${CONF} 2>/dev/null || echo 1)`,
+          'pg=$(pgrep -f power_guard.sh >/dev/null 2>&1 && echo 1 || echo 0)',
+          'al=$(pgrep -f alert_slider.sh >/dev/null 2>&1 && echo 1 || echo 0)',
+          'camerax=$(grep -q androidx.camera.extensions.impl.fake.jar /proc/mounts && echo 1 || echo 0)',
+          'sms=$(grep -q telephony-common.jar /proc/mounts && echo 1 || echo 0)',
+          'ims=$(grep -q imsservice.apk /proc/mounts && echo 1 || echo 0)',
+          'sec=$(grep -q SystemUI.apk /proc/mounts && echo 1 || echo 0)',
+          'csc=$(grep -q cscfeature.xml /proc/mounts && echo 1 || echo 0)',
+          'cb=$(grep -q callbridge_auto.sh /proc/mounts && echo 1 || echo 0)',
+          'printf "cap=%s\\ntemp=%s\\nstat=%s\\nmmi=%s\\ntri=%s\\nbypass=%s\\nlimit=%s\\nslider=%s\\npg=%s\\nal=%s\\ncamerax=%s\\nsms=%s\\nims=%s\\nsec=%s\\ncsc=%s\\ncb=%s\\n" "$cap" "$temp" "$stat" "$mmi" "$tri" "$bypass" "$limit" "$slider" "$pg" "$al" "$camerax" "$sms" "$ims" "$sec" "$csc" "$cb"'
+        ].join('; ');
+
+        try {
+          const out = await ksuExec(cmd);
+          warn.style.display = 'none';
+          const d = {};
+          out.trim().split('\n').forEach((line) => {
+            const idx = line.indexOf('=');
+            if (idx > 0) d[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+          });
+
+          const deg = (Number(d.temp || 0) / 10).toFixed(1);
+          document.getElementById('val-bat').textContent = `${d.cap}% / ${deg}°C`;
+          document.getElementById('val-chg').textContent =
+            d.mmi === '0' ? '旁路/限流直驱' : `正常充电 (${d.stat})`;
+          document.getElementById('val-tri').textContent = renderTri(d.tri);
+          document.getElementById('val-daemons').textContent =
+            `开关:${d.al === '1' ? '运行' : '未跑'} · 电源:${d.pg === '1' ? '运行' : '未跑'}`;
+
+          document.getElementById('chk-bypass').checked = d.bypass === '1';
+          document.getElementById('chk-slider').checked = d.slider !== '0';
+
+          const lim = String(Number(d.limit || 0));
+          document.querySelectorAll('#limit-pills .pill').forEach((p) => {
+            p.classList.toggle('active', p.dataset.limit === lim);
+          });
+          renderChecks(d);
+        } catch (err) {
+          warn.style.display = 'block';
+          warn.textContent = err.message;
+        }
+      }
+
+      document.getElementById('chk-bypass').addEventListener('change', async (e) => {
+        const on = e.target.checked ? '1' : '0';
+        try {
+          await saveConf({ BYPASS_MODE: on });
+          if (on === '1') {
+            await ksuExec(`printf '0\\n' > ${MMI}`);
+            toast('旁路供电已开启 (直驱硬件)');
+          } else {
+            await ksuExec(`printf '1\\n' > ${MMI}`);
+            toast('旁路供电已关闭');
+          }
+          setTimeout(refresh, 300);
+        } catch (err) {
+          toast('设置失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('limit-pills').addEventListener('click', async (e) => {
+        const pill = e.target.closest('.pill');
+        if (!pill) return;
+        const limit = pill.dataset.limit;
+        try {
+          await saveConf({ CHARGE_LIMIT: limit });
+          if (limit === '0') {
+            await ksuExec(`printf '1\\n' > ${MMI}`);
+            toast('已关闭充电上限保护');
+          } else {
+            toast(`充电上限已设为 ${limit}%`);
+          }
+          setTimeout(refresh, 300);
+        } catch (err) {
+          toast('设置失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('chk-slider').addEventListener('change', async (e) => {
+        const on = e.target.checked ? '1' : '0';
+        try {
+          await saveConf({ SLIDER_ENABLED: on });
+          toast(on === '1' ? '三段式开关监听已启用' : '三段式开关监听已暂停');
+        } catch (err) {
+          toast('设置失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('btn-sync-slider').addEventListener('click', async () => {
+        try {
+          await ksuExec([
+            's=$(tr -d "[:space:]" < /proc/tristatekey/tri_state 2>/dev/null)',
+            'case "$s" in 1) m=0;; 2) m=1;; 3) m=2;; *) exit 1;; esac',
+            'service call audio 53 i32 "$m" s16 android >/dev/null 2>&1',
+            'cmd vibrator_manager synced oneshot -a 30 210 >/dev/null 2>&1 || true'
+          ].join('; '));
+          toast('已按物理拨片位置同步响铃模式');
+          refresh();
+        } catch (err) {
+          toast('同步失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('btn-refresh').addEventListener('click', refresh);
+
+      refresh();
+      setInterval(refresh, 4000);
+    })();
+  </script>
+</body>
+</html>

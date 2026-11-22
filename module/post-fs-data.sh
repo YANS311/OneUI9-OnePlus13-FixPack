@@ -33,3 +33,9 @@ fi
 if [ -f "$MODS_DIR/callbridge_auto.sh" ] && [ -f /vendor/etc/oneui9/callbridge_auto.sh ]; then
     mount -o bind "$MODS_DIR/callbridge_auto.sh" /vendor/etc/oneui9/callbridge_auto.sh
 fi
+
+# 6. Mount enhanced plaintext TGY cscfeature.xml (Call Recording, 50Hz, Network Speed, App Lock)
+if [ -f "$MODS_DIR/cscfeature.xml" ] && [ -f /optics/configs/carriers/TGY/conf/system/cscfeature.xml ]; then
+    umount /optics/configs/carriers/TGY/conf/system/cscfeature.xml 2>/dev/null || true
+    mount -o bind "$MODS_DIR/cscfeature.xml" /optics/configs/carriers/TGY/conf/system/cscfeature.xml
+fi

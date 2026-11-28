@@ -9,10 +9,12 @@
 
 ---
 
-## ✨ `v1.2.2` 修复、硬件增强与隐蔽加固清单（真机实测验证）
+## ✨ `v1.3.0` 修复、硬件增强与隐蔽加固清单（真机实测验证）
 
 | 模块 | 解决的痛点 / 新增能力 | 技术根因与修复方案 |
 | :--- | :--- | :--- |
+| **0. USB MTP / PTP 文件传输失灵（`v1.3.0` 新增）** | 插线只充电/ADB，选「传输文件」仍读不到手机存储且 30s 后被强杀回仅 ADB | 三星 `init.usb.configfs.rc` 注释了全部 `sys.usb.config` 触发器，一加 `init.qcom.usb.rc` 又未写 `g1/UDC` 与 `sys.usb.state`，导致 `UsbDeviceManager` 报 `Failed to kick USB config` 且原厂 `oneui9_usb.sh` 定时强制写死 `adb`。`module/scripts/oneui9_usb.sh` 接管 ConfigFS + UDC + `sys.usb.state`，支持 `mtp,adb` (`0x2765`) / `ptp,adb` / `rndis` / `midi` / `adb` 热切换（刷入免重启即生效），并在 WebUI 内置 USB 模式快切。 |
+| **0b. 来电铃声 / 通知音偶发 `null` 自愈（`v1.3.0` 新增）** | 部分移植环境来电无声（`ringtone=null` / 未绑定 MediaStore ID） | `service.sh` 开机后兜底检索 MediaStore 音频 ID，仅在系统铃声/通知音为 `null` 或空时自动回填合法 URI。 |
 | **1. 微信 / OneDrive 等 App 秒闪退** | Kotlin / R8 混淆应用启动即崩（`NoSuchMethodError`） | 一加 `/odm/framework/androidx.camera.extensions.impl.fake.jar` 混入未混淆的 `kotlin-stdlib` 污染父 ClassLoader。`post-fs-data` 使用 `/system/framework/sec_camerax_impl.jar` 只读 bind-mount 替换根治。 |
 | **2. 双实体 SIM 管理器** | 隐藏卡槽 2、错显 eSIM 或去掉 eSIM 后显示无卡 | 移除 `privapp-permissions-com.samsung.euicc*.xml` 的 `euicc` 声明与 `floating_feature.xml` 的 `tsds2`，按 `gsm.sim.state` 自动补齐 `ril.ICC_TYPE0/1`。 |
 | **3. 三网双卡发短信修复** | 电信/联通/移动发短信报 `RADIO_NOT_AVAILABLE` | 原位修补 `telephony-common.jar`（保持 `STORED` 对齐）：`mSemCi` → `mCi`、`secSendSMS*` → `sendSMS*`，并将 `mIsSmsOverImsOnly` → `mIsRegistered` 打通纯 VoLTE IMS 短信（实测 `SIP 202 Accepted`）。 |
@@ -32,12 +34,12 @@
 ## 🛠️ 安装与使用
 
 ### 方式一：KernelSU 刷入模块（日常用户）
-1. 前往 [Releases](https://github.com/YANS311/OneUI9-OnePlus13-FixPack/releases) 下载 `OneUI9-OnePlus13-FixPack-v1.2.2.zip`；
-2. 若已在 PC 运行过补丁（或已暂存到 `/sdcard/Download/OneUI9_v1.2.2/`），直接在 **KernelSU Manager**（或 Magisk）中刷入该模块，安装脚本会自动原子导入暂存补丁并清理早期旧热修复脚本；
-3. 重启手机，在 KernelSU 模块页点击本模块 **「打开」** 即可使用 WebUI 控制与隐蔽体检面板。
+1. 前往 [Releases](https://github.com/YANS311/OneUI9-OnePlus13-FixPack/releases) 下载 `OneUI9-OnePlus13-FixPack-v1.3.0.zip`；
+2. 若已在 PC 运行过补丁（或已暂存到 `/sdcard/Download/OneUI9_v1.3.0/`），直接在 **KernelSU Manager**（或 Magisk）中刷入该模块，安装脚本会自动原子导入暂存补丁并清理早期旧热修复脚本（**USB MTP 修复刷入即热激活，无需重启即可传文件**）；
+3. 重启手机后激活全部 DEX / 框架挂接，在 KernelSU 模块页点击本模块 **「打开」** 即可使用 WebUI 控制、USB 切档与隐蔽体检面板。
 
 ### 方式二：PC 端一键原位修补脚本（含 Binary + TGY CSC）
-> 本仓库不含任何三星版权二进制，脚本会从你自己的手机拉取原包，在本地完成全部修补与校验；若 ADB 具备 root（`uid=0`）将直接部署到 `/data/adb/oneui9_mods/`，若受 Play Integrity 伪装限制为非 root（`uid=2000`）则自动暂存至 `/sdcard/Download/OneUI9_v1.2.2/` 供 KernelSU 安装器接管。
+> 本仓库不含任何三星版权二进制，脚本会从你自己的手机拉取原包，在本地完成全部修补与校验；若 ADB 具备 root（`uid=0`）将直接部署到 `/data/adb/oneui9_mods/`，若受 Play Integrity 伪装限制为非 root（`uid=2000`）则自动暂存至 `/sdcard/Download/OneUI9_v1.3.0/` 供 KernelSU 安装器接管。
 
 ```bash
 python patchers/apply_via_adb.py --reboot

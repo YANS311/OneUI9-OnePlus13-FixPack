@@ -53,3 +53,8 @@ if [ -f "$MODS_DIR/cscfeature.xml" ] && [ -f /optics/configs/carriers/TGY/conf/s
         susfs_hide_mount /vendor/etc/oneui9/optics/configs/carriers/TGY/conf/system/cscfeature.xml
     fi
 fi
+
+# 7. Stealth-mount ConfigFS USB bridge (/vendor/bin/oneui9_usb.sh) for MTP/PTP/RNDIS + ADB
+if [ -f "$MODS_DIR/oneui9_usb.sh" ] && [ -f /vendor/bin/oneui9_usb.sh ]; then
+    stealth_bind_mount "$MODS_DIR/oneui9_usb.sh" /vendor/bin/oneui9_usb.sh 0755
+fi

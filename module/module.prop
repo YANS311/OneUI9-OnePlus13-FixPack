@@ -1,6 +1,6 @@
 id=oneui9_op13_fixpack
 name=OneUI 9 FixPack for OnePlus 13 (PJZ110 / dodge)
-version=v1.2.2
-versionCode=122
+version=v1.3.0
+versionCode=130
 author=YANS311
-description=Comprehensive daily-driver fix pack & hardware adaptation for OneUI 9.0 (Android 17) ports on OnePlus 13: Stealth read-only /data/misc/oneui_rt mounting, safe BL/Debug prop hardening, SUSFS auto-hook & WebUI Stealth Audit, Alert Slider + Haptics, Hardware Bypass Charging, Dynamic TGY CSC, Clock Seconds, CameraX fix, Dual SIM, SMS/VoLTE, 0.3s CallBridge, 60fps + 9:16 Camera.
+description=Comprehensive daily-driver fix pack & hardware adaptation for OneUI 9.0 (Android 17) ports on OnePlus 13: USB ConfigFS MTP/PTP/RNDIS + ADB bridge & WebUI quick switcher, dual-SIM ringtone null fallback, Stealth read-only /data/misc/oneui_rt mounting, safe BL/Debug prop hardening, SUSFS auto-hook & WebUI Stealth Audit, Alert Slider + Haptics, Hardware Bypass Charging, Dynamic TGY CSC, Clock Seconds, CameraX fix, Dual SIM, SMS/VoLTE, 0.3s CallBridge, 60fps + 9:16 Camera.

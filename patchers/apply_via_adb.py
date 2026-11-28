@@ -4,7 +4,7 @@
 Pulls your device's own framework/telephony/SystemUI/CSC files via ADB, applies
 all surgical binary & OMC CSC patches locally, verifies ZIP/DEX integrity, and
 either pushes directly to /data/adb/oneui9_mods/ (if ADB shell has root) or
-stages them to /sdcard/Download/OneUI9_v1.2.2/ for KernelSU module installation.
+stages them to /sdcard/Download/OneUI9_v1.3.0/ for KernelSU module installation.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from patch_imsservice import patch_imsservice_apk
 from patch_systemui_seconds import patch_systemui_apk_inplace
 from patch_telephony_sms import patch_jar_inplace
 
-STAGE_SDCARD_DIR = "/sdcard/Download/OneUI9_v1.2.2"
+STAGE_SDCARD_DIR = "/sdcard/Download/OneUI9_v1.3.0"
 MODS_DIR = "/data/adb/oneui9_mods"
 
 
@@ -41,7 +41,7 @@ def pull_first_available(adb: str, candidates: list[str], dst: Path) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Apply OneUI 9.0 FixPack v1.2.2 binary & CSC patches via ADB")
+    ap = argparse.ArgumentParser(description="Apply OneUI 9.0 FixPack v1.3.0 binary & CSC patches via ADB")
     ap.add_argument("--adb", default="adb", help="Path to adb executable")
     ap.add_argument("--reboot", action="store_true", help="Reboot device if pushed directly as root")
     args = ap.parse_args()
@@ -132,7 +132,7 @@ def main() -> int:
             for local_f, remote_name in outputs:
                 run([adb, "push", str(local_f), f"{STAGE_SDCARD_DIR}/{remote_name}"])
             print(
-                f"Done! Flash OneUI9-OnePlus13-FixPack-v1.2.2.zip in KernelSU Manager;\n"
+                f"Done! Flash OneUI9-OnePlus13-FixPack-v1.3.0.zip in KernelSU Manager;\n"
                 f"customize.sh will automatically import all staged files from {STAGE_SDCARD_DIR}/."
             )
 

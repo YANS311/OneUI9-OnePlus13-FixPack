@@ -61,8 +61,8 @@ if [ -f "$CF_SRC" ]; then
     fi
 fi
 
-# 4. Install hardened callbridge_auto.sh + hardware daemons + stealth library
-for s in callbridge_auto.sh alert_slider.sh power_guard.sh stealth_lib.sh; do
+# 4. Install hardened callbridge_auto.sh + hardware daemons + stealth library + USB bridge
+for s in callbridge_auto.sh alert_slider.sh power_guard.sh stealth_lib.sh oneui9_usb.sh; do
     if [ -f "$MODPATH/scripts/$s" ]; then
         cp -f "$MODPATH/scripts/$s" "$MODS_DIR/$s"
         chmod 0755 "$MODS_DIR/$s"
@@ -86,8 +86,8 @@ elif ! grep -q '^STEALTH_PROPS=' "$MODS_DIR/power.conf" 2>/dev/null; then
     ui_print "- Enabled STEALTH_PROPS=1 in existing power.conf"
 fi
 
-# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0 .. v1.2.2
-for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1 /sdcard/Download/OneUI9_v1.2.2; do
+# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0 .. v1.3.0
+for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1 /sdcard/Download/OneUI9_v1.2.2 /sdcard/Download/OneUI9_v1.3.0; do
     for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
         if [ -s "$STAGE_DIR/$f" ]; then
             cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f.tmp" && mv -f "$MODS_DIR/$f.tmp" "$MODS_DIR/$f"
@@ -105,6 +105,20 @@ chmod 0644 "$MODS_DIR"/*.xml "$MODS_DIR"/*.conf 2>/dev/null || true
 chmod 0755 "$MODS_DIR"/*.sh 2>/dev/null || true
 chcon -R u:object_r:system_file:s0 "$MODS_DIR" 2>/dev/null || true
 chmod 0755 "$MODPATH/post-fs-data.sh" "$MODPATH/service.sh" "$MODPATH/uninstall.sh" "$MODPATH/scripts"/*.sh 2>/dev/null || true
+
+# 8. Live-activate USB ConfigFS MTP/PTP/ADB bridge immediately on flash (no reboot needed)
+if [ -x "$MODS_DIR/oneui9_usb.sh" ]; then
+    if [ -f "$MODS_DIR/stealth_lib.sh" ] && [ -f /vendor/bin/oneui9_usb.sh ]; then
+        # shellcheck disable=SC1090,SC1091
+        . "$MODS_DIR/stealth_lib.sh"
+        stealth_bind_mount "$MODS_DIR/oneui9_usb.sh" /vendor/bin/oneui9_usb.sh 0755
+    fi
+    pkill -f 'oneui9_usb\.sh' 2>/dev/null || true
+    rm -f /data/local/tmp/.oneui9_usb.pid 2>/dev/null || true
+    rmdir /data/local/tmp/.oneui9_usb.lock 2>/dev/null || true
+    nohup "$MODS_DIR/oneui9_usb.sh" >/dev/null 2>&1 &
+    ui_print "- Activated USB ConfigFS MTP/PTP/ADB bridge live!"
+fi
 
 ui_print "- KernelSU WebUI dashboard is ready: tap 'Open' on the module card!"
 ui_print "- Note: For DEX binary patches (SMS v3, CTC/CU VoLTE, Clock Seconds),"

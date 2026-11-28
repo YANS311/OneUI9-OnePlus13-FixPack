@@ -356,14 +356,15 @@ class TestSystemUiSecondsPatcher(unittest.TestCase):
 class TestModuleAndSkillHygiene(unittest.TestCase):
     def test_module_prop_version_and_stealth_mounts(self):
         prop_text = (ROOT / "module" / "module.prop").read_text(encoding="utf-8")
-        self.assertIn("version=v1.2.2", prop_text)
-        self.assertIn("versionCode=122", prop_text)
+        self.assertIn("version=v1.3.0", prop_text)
+        self.assertIn("versionCode=130", prop_text)
 
         pfd = (ROOT / "module" / "post-fs-data.sh").read_text(encoding="utf-8")
         srv = (ROOT / "module" / "service.sh").read_text(encoding="utf-8")
         for script_text in (pfd, srv):
             self.assertIn("stealth_bind_mount", script_text)
             self.assertNotIn('mount -o bind "$MODS_DIR/', script_text)
+            self.assertIn("/vendor/bin/oneui9_usb.sh", script_text)
 
     def test_bugfix_regressions(self):
         import re
@@ -394,6 +395,12 @@ class TestModuleAndSkillHygiene(unittest.TestCase):
         stl = (ROOT / "module" / "scripts" / "stealth_lib.sh").read_text(encoding="utf-8")
         self.assertIn("realpath", stl)
         self.assertIn("umount -l", stl)
+
+        usb = (ROOT / "module" / "scripts" / "oneui9_usb.sh").read_text(encoding="utf-8")
+        self.assertIn("mtp,adb", usb)
+        self.assertIn("sys.usb.state", usb)
+        self.assertIn("0x2765", usb)
+        self.assertIn("ffs.mtp", usb)
 
     def test_lf_line_endings(self):
         exts = {".sh", ".html", ".prop", ".py"}

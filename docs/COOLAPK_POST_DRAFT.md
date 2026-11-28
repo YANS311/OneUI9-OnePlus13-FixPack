@@ -1,12 +1,19 @@
-# 【酷安发帖草稿】一加 13（24G+1TB）手搓 OneUI 9.0（Android 17）主力机日用化全记录 + 开源 v1.2.2 一键套件
+# 【酷安发帖草稿】一加 13（24G+1TB）手搓 OneUI 9.0（Android 17）主力机日用化全记录 + 开源 v1.3.0 一键套件
 
-> **建议标题**：花一半的钱手搓“S26 Ultra 24G+1TB 6000mAh 特别版”！一加 13 刷 OneUI 9.0 v1.2.2 开源套件发布：防 Root/BL 检测隐蔽挂载＋体检面板＋三段式开关＋旁路直驱＋全三网 VoLTE 短信全修平
+> **建议标题**：花一半的钱手搓“S26 Ultra 24G+1TB 6000mAh 特别版”！一加 13 刷 OneUI 9.0 v1.3.0 开源套件发布：根治 USB MTP 文件传输失灵＋防 Root/BL 检测隐蔽挂载＋三段式开关＋旁路直驱＋全三网 VoLTE 短信全修平
 
 ---
 
 ### 📱 硬件对标（真香时刻）
 - **一加 13（PJZ110）**：骁龙 8 Elite + **24GB 内存** + **1TB** + **6000mAh** + 100W 快充 + **OneUI 9.0（Android 17 / 港版 TGY）**
 - 同期原版三星旗舰 16G+1TB 卖到 1.2W+ 且只有 5000mAh + 45W，这套刷稳之后简直不要太香。
+
+---
+
+### 🔌 `v1.3.0` 根治 USB MTP/PTP 电脑读不到手机存储 + 来电铃声自愈
+
+- **根因定位**：三星 `init.usb.configfs.rc` 触发器全被注释，一加 `init.qcom.usb.rc` 又没写 `g1/UDC` 与 `sys.usb.state`，导致切换「传输文件」超时，且原厂 `oneui9_usb.sh` 30 秒后强制重置回仅 `adb`（`0x2769`）。
+- **修复方案**：`oneui9_usb.sh` 事件驱动 + 看门狗完整接管 DWC3 ConfigFS（`mtp,adb` `0x2765` / `ptp,adb` / `rndis` / `adb`），**KernelSU 刷入即热激活、免重启直接出盘符**，WebUI 内置一键切 USB 模式；附带开机 `ringtone=null` MediaStore 自愈兜底。
 
 ---
 
@@ -39,5 +46,5 @@
 
 ### 📦 开源地址（GitHub Actions 自动打包，零版权夹带）
 - **GitHub 仓库**：`https://github.com/YANS311/OneUI9-OnePlus13-FixPack`
-- 含 **KernelSU / Magisk v1.2.2 一键模块包（内置 WebUI 隐蔽体检，Release 直接下载）** + **PC 端一键 ADB 原位修补脚本** + **4 套 Agent Skills** + 完整技术原理。
+- 含 **KernelSU / Magisk v1.3.0 一键模块包（内置 WebUI USB 切档与隐蔽体检，Release 直接下载）** + **PC 端一键 ADB 原位修补脚本** + **4 套 Agent Skills** + 完整技术原理。
 - 欢迎各位一加 13 刷 OneUI 9 的机友 Star / PR，一起把移植包打磨成完美主力机！

@@ -198,7 +198,7 @@
         <h1>OneUI 9 FixPack 控制台</h1>
         <div class="sub">OnePlus 13 (PJZ110) · 一加硬件适配与日常补丁</div>
       </div>
-      <span class="badge">v1.2.2</span>
+      <span class="badge">v1.3.0</span>
     </header>
 
     <div id="env-warn"></div>
@@ -266,6 +266,20 @@
           <input type="checkbox" id="chk-slider" />
           <span class="slider"></span>
         </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <span>USB 连接与 MTP 传输模式</span>
+        <span class="row-desc" id="usb-state-tag" style="margin:0;">--</span>
+      </div>
+      <div class="row-desc" style="margin-bottom:4px;">绕过 OneUI init 缺失触发器，直接绑定 Qualcomm DWC3 ConfigFS (<code>mtp,adb</code> / <code>ptp,adb</code>)</div>
+      <div class="pills" id="usb-pills">
+        <div class="pill" data-usb="mtp,adb">MTP + ADB</div>
+        <div class="pill" data-usb="ptp,adb">PTP + ADB</div>
+        <div class="pill" data-usb="adb">仅充电 + ADB</div>
+        <div class="pill" data-usb="mtp">仅 MTP</div>
       </div>
     </section>
 
@@ -366,7 +380,8 @@
           ['imsservice 电信/联通 VoLTE 修复', d.ims === '1'],
           ['SystemUI 状态栏永久秒数', d.sec === '1'],
           ['TGY CSC 明文增强 (通话录音/网速)', d.csc === '1'],
-          ['CallBridge 0.3s 极速接听', d.cb === '1']
+          ['CallBridge 0.3s 极速接听', d.cb === '1'],
+          ['USB ConfigFS MTP 桥接', d.usb === '1']
         ];
         document.getElementById('patch-list').innerHTML = items.map(([name, ok]) =>
           `<div class="check-item"><span>${name}</span><span class="${ok ? 'tag-ok' : 'tag-off'}">${ok ? '已激活' : '未启用'}</span></div>`
@@ -435,7 +450,10 @@
           'sec=$(grep -q SystemUI.apk /proc/mounts && echo 1 || echo 0)',
           'csc=$(grep -q cscfeature.xml /proc/mounts && echo 1 || echo 0)',
           'cb=$(grep -q callbridge_auto.sh /proc/mounts && echo 1 || echo 0)',
-          'printf "cap=%s\\ntemp=%s\\nstat=%s\\nmmi=%s\\ntri=%s\\nbypass=%s\\nlimit=%s\\nslider=%s\\npg=%s\\nal=%s\\ncamerax=%s\\nsms=%s\\nims=%s\\nsec=%s\\ncsc=%s\\ncb=%s\\n" "$cap" "$temp" "$stat" "$mmi" "$tri" "$bypass" "$limit" "$slider" "$pg" "$al" "$camerax" "$sms" "$ims" "$sec" "$csc" "$cb"',
+          'usb=$(pgrep -f oneui9_usb.sh >/dev/null 2>&1 && echo 1 || echo 0)',
+          'usb_cfg=$(getprop sys.usb.config)',
+          'usb_st=$(getprop sys.usb.state)',
+          'printf "cap=%s\\ntemp=%s\\nstat=%s\\nmmi=%s\\ntri=%s\\nbypass=%s\\nlimit=%s\\nslider=%s\\npg=%s\\nal=%s\\ncamerax=%s\\nsms=%s\\nims=%s\\nsec=%s\\ncsc=%s\\ncb=%s\\nusb=%s\\nusb_cfg=%s\\nusb_st=%s\\n" "$cap" "$temp" "$stat" "$mmi" "$tri" "$bypass" "$limit" "$slider" "$pg" "$al" "$camerax" "$sms" "$ims" "$sec" "$csc" "$cb" "$usb" "$usb_cfg" "$usb_st"',
           'if [ -f /data/adb/oneui9_mods/stealth_lib.sh ]; then sh /data/adb/oneui9_mods/stealth_lib.sh audit 2>/dev/null || true; elif [ -f /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh ]; then sh /data/adb/modules/oneui9_op13_fixpack/scripts/stealth_lib.sh audit 2>/dev/null || true; fi'
         ].join('; ');
 
@@ -463,6 +481,11 @@
           const lim = String(Number(d.limit || 0));
           document.querySelectorAll('#limit-pills .pill').forEach((p) => {
             p.classList.toggle('active', p.dataset.limit === lim);
+          });
+          document.getElementById('usb-state-tag').textContent =
+            `state=${d.usb_st || '-'} · ${d.usb === '1' ? '运行' : '未跑'}`;
+          document.querySelectorAll('#usb-pills .pill').forEach((p) => {
+            p.classList.toggle('active', p.dataset.usb === d.usb_cfg);
           });
           renderStealth(d);
           renderChecks(d);
@@ -529,6 +552,24 @@
           refresh();
         } catch (err) {
           toast('同步失败: ' + err.message);
+        }
+      });
+
+      document.getElementById('usb-pills').addEventListener('click', async (e) => {
+        const pill = e.target.closest('.pill');
+        if (!pill) return;
+        const mode = pill.dataset.usb;
+        try {
+          await ksuExec([
+            `setprop persist.sys.usb.config '${mode}'`,
+            'if [ -x /data/adb/oneui9_mods/oneui9_usb.sh ]; then USB_BIN=/data/adb/oneui9_mods/oneui9_usb.sh; elif [ -x /data/adb/modules/oneui9_op13_fixpack/scripts/oneui9_usb.sh ]; then USB_BIN=/data/adb/modules/oneui9_op13_fixpack/scripts/oneui9_usb.sh; else USB_BIN=/vendor/bin/oneui9_usb.sh; fi',
+            `"$USB_BIN" --apply '${mode}'`,
+            'if ! pgrep -f oneui9_usb.sh >/dev/null 2>&1; then nohup "$USB_BIN" >/dev/null 2>&1 & fi'
+          ].join('; '));
+          toast(`USB 模式已切换: ${mode}`);
+          setTimeout(refresh, 400);
+        } catch (err) {
+          toast('USB 切换失败: ' + err.message);
         }
       });
 

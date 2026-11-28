@@ -108,3 +108,51 @@ if [ -x "$MODDIR/scripts/power_guard.sh" ]; then
 elif [ -x "$MODS_DIR/power_guard.sh" ]; then
     nohup "$MODS_DIR/power_guard.sh" >/dev/null 2>&1 &
 fi
+
+# 9. Replace broken stock USB watchdog with ConfigFS MTP/PTP/RNDIS + ADB bridge
+if [ -f "$MODS_DIR/oneui9_usb.sh" ] && [ -f /vendor/bin/oneui9_usb.sh ]; then
+    stealth_bind_mount "$MODS_DIR/oneui9_usb.sh" /vendor/bin/oneui9_usb.sh 0755
+fi
+pkill -f 'oneui9_usb\.sh' 2>/dev/null || true
+rm -f /data/local/tmp/.oneui9_usb.pid 2>/dev/null || true
+rmdir /data/local/tmp/.oneui9_usb.lock 2>/dev/null || true
+if [ -x "$MODS_DIR/oneui9_usb.sh" ]; then
+    nohup "$MODS_DIR/oneui9_usb.sh" >/dev/null 2>&1 &
+elif [ -x "$MODDIR/scripts/oneui9_usb.sh" ]; then
+    nohup "$MODDIR/scripts/oneui9_usb.sh" >/dev/null 2>&1 &
+fi
+
+# 10. Dual-SIM ringtone null fallback (re-hydrate MediaStore URIs only if null/empty)
+(
+    _cur_r1="$(settings get system ringtone 2>/dev/null)"
+    if [ -z "$_cur_r1" ] || [ "$_cur_r1" = "null" ]; then
+        _rt_try=0
+        _ring_id=""
+        while [ "$_rt_try" -lt 6 ]; do
+            _ring_id="$(content query --uri content://media/internal/audio/media --projection _id --where "_data='/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Over_the_Horizon_2026.ogg'" 2>/dev/null | sed -n 's/.*_id=\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+            [ -n "$_ring_id" ] && break
+            _rt_try=$((_rt_try + 1))
+            sleep 5
+        done
+        if [ -n "$_ring_id" ]; then
+            settings put system ringtone "content://media/internal/audio/media/$_ring_id?title=Over%20the%20Horizon%202026&canonical=1" 2>/dev/null || true
+            _cur_r2="$(settings get system ringtone_2 2>/dev/null)"
+            if [ -z "$_cur_r2" ] || [ "$_cur_r2" = "null" ]; then
+                _ring2_id="$(content query --uri content://media/internal/audio/media --projection _id --where "_data='/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Signal.ogg'" 2>/dev/null | sed -n 's/.*_id=\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+                [ -n "$_ring2_id" ] && settings put system ringtone_2 "content://media/internal/audio/media/$_ring2_id?title=Signal&canonical=1" 2>/dev/null || true
+            fi
+            _cur_n1="$(settings get system notification_sound 2>/dev/null)"
+            if [ -z "$_cur_n1" ] || [ "$_cur_n1" = "null" ]; then
+                _not_id="$(content query --uri content://media/internal/audio/media --projection _id --where "_data='/system/media/audio/notifications/SoundTheme/Galaxy/Galaxy_Bells.ogg'" 2>/dev/null | sed -n 's/.*_id=\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+                if [ -n "$_not_id" ]; then
+                    _not_uri="content://media/internal/audio/media/$_not_id?title=Galaxy%20Bells&canonical=1"
+                    settings put system notification_sound "$_not_uri" 2>/dev/null || true
+                    _cur_n2="$(settings get system notification_sound_2 2>/dev/null)"
+                    if [ -z "$_cur_n2" ] || [ "$_cur_n2" = "null" ]; then
+                        settings put system notification_sound_2 "$_not_uri" 2>/dev/null || true
+                    fi
+                fi
+            fi
+        fi
+    fi
+) >/dev/null 2>&1 &

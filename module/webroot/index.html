@@ -198,7 +198,7 @@
         <h1>OneUI 9 FixPack 控制台</h1>
         <div class="sub">OnePlus 13 (PJZ110) · 一加硬件适配与日常补丁</div>
       </div>
-      <span class="badge">v1.3.0</span>
+      <span class="badge">v1.3.1</span>
     </header>
 
     <div id="env-warn"></div>
@@ -274,12 +274,12 @@
         <span>USB 连接与 MTP 传输模式</span>
         <span class="row-desc" id="usb-state-tag" style="margin:0;">--</span>
       </div>
-      <div class="row-desc" style="margin-bottom:4px;">绕过 OneUI init 缺失触发器，直接绑定 Qualcomm DWC3 ConfigFS (<code>mtp,adb</code> / <code>ptp,adb</code>)</div>
+      <div class="row-desc" style="margin-bottom:4px;">联动 <code>svc usb setFunctions</code> 与 ConfigFS (<code>f1/f2 + os_desc</code>)，保留 ADB 并拉起 MtpService</div>
       <div class="pills" id="usb-pills">
-        <div class="pill" data-usb="mtp,adb">MTP + ADB</div>
-        <div class="pill" data-usb="ptp,adb">PTP + ADB</div>
+        <div class="pill" data-usb="mtp,adb">MTP 文件传输 + ADB</div>
+        <div class="pill" data-usb="ptp,adb">PTP 照片 + ADB</div>
+        <div class="pill" data-usb="rndis,adb">USB 网络共享 + ADB</div>
         <div class="pill" data-usb="adb">仅充电 + ADB</div>
-        <div class="pill" data-usb="mtp">仅 MTP</div>
       </div>
     </section>
 
@@ -484,8 +484,16 @@
           });
           document.getElementById('usb-state-tag').textContent =
             `state=${d.usb_st || '-'} · ${d.usb === '1' ? '运行' : '未跑'}`;
+          const normUsb = (() => {
+            const c = d.usb_cfg || '';
+            if (c === 'mtp,adb' || c === 'adb,mtp' || c === 'mtp,conn_gadget,adb' || c === 'mtp,diag,adb' || c === 'mtp' || c === 'mtp,conn_gadget') return 'mtp,adb';
+            if (c === 'ptp,adb' || c === 'adb,ptp' || c === 'ptp,conn_gadget,adb' || c === 'ptp' || c === 'ptp,conn_gadget') return 'ptp,adb';
+            if (c === 'rndis,adb' || c === 'adb,rndis' || c === 'rndis') return 'rndis,adb';
+            if (c === 'adb' || c === 'diag,adb' || c === 'adb,diag' || c === 'sec_charging,adb' || c === 'charging,adb') return 'adb';
+            return c;
+          })();
           document.querySelectorAll('#usb-pills .pill').forEach((p) => {
-            p.classList.toggle('active', p.dataset.usb === d.usb_cfg);
+            p.classList.toggle('active', p.dataset.usb === normUsb);
           });
           renderStealth(d);
           renderChecks(d);
@@ -559,12 +567,17 @@
         const pill = e.target.closest('.pill');
         if (!pill) return;
         const mode = pill.dataset.usb;
+        const fnMap = { 'mtp,adb': 'mtp', 'ptp,adb': 'ptp', 'rndis,adb': 'rndis', adb: '' };
+        const fn = fnMap[mode] || '';
+        const svcCmd = fn ? `svc usb setFunctions ${fn}` : 'svc usb setFunctions';
         try {
           await ksuExec([
-            `setprop persist.sys.usb.config '${mode}'`,
             'if [ -x /data/adb/oneui9_mods/oneui9_usb.sh ]; then USB_BIN=/data/adb/oneui9_mods/oneui9_usb.sh; elif [ -x /data/adb/modules/oneui9_op13_fixpack/scripts/oneui9_usb.sh ]; then USB_BIN=/data/adb/modules/oneui9_op13_fixpack/scripts/oneui9_usb.sh; else USB_BIN=/vendor/bin/oneui9_usb.sh; fi',
-            `"$USB_BIN" --apply '${mode}'`,
-            'if ! pgrep -f oneui9_usb.sh >/dev/null 2>&1; then nohup "$USB_BIN" >/dev/null 2>&1 & fi'
+            'if ! pgrep -f oneui9_usb.sh >/dev/null 2>&1; then nohup "$USB_BIN" >/dev/null 2>&1 & sleep 0.2; fi',
+            `setprop persist.sys.usb.config '${mode}'`,
+            svcCmd,
+            'sleep 1',
+            `if [ -z "$(cat /config/usb_gadget/g1/UDC 2>/dev/null)" ]; then "$USB_BIN" --apply '${mode}'; fi`
           ].join('; '));
           toast(`USB 模式已切换: ${mode}`);
           setTimeout(refresh, 400);

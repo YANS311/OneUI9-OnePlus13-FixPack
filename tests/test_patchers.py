@@ -356,8 +356,8 @@ class TestSystemUiSecondsPatcher(unittest.TestCase):
 class TestModuleAndSkillHygiene(unittest.TestCase):
     def test_module_prop_version_and_stealth_mounts(self):
         prop_text = (ROOT / "module" / "module.prop").read_text(encoding="utf-8")
-        self.assertIn("version=v1.3.0", prop_text)
-        self.assertIn("versionCode=130", prop_text)
+        self.assertIn("version=v1.3.1", prop_text)
+        self.assertIn("versionCode=131", prop_text)
 
         pfd = (ROOT / "module" / "post-fs-data.sh").read_text(encoding="utf-8")
         srv = (ROOT / "module" / "service.sh").read_text(encoding="utf-8")
@@ -401,6 +401,17 @@ class TestModuleAndSkillHygiene(unittest.TestCase):
         self.assertIn("sys.usb.state", usb)
         self.assertIn("0x2765", usb)
         self.assertIn("ffs.mtp", usb)
+        self.assertIn('"$CFG/f1"', usb)
+        self.assertIn('"$G1/os_desc/b.1"', usb)
+        self.assertIn("0x00", usb)
+        self.assertIn("diag,adb", usb)
+        self.assertIn("mtp,conn_gadget", usb)
+        self.assertIn("bind_adb_fallback", usb)
+        self.assertNotIn("0xEF", usb)
+        self.assertNotIn('"$CFG/$_fn"', usb)
+
+        webui = (ROOT / "module" / "webroot" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("svc usb setFunctions", webui)
 
     def test_lf_line_endings(self):
         exts = {".sh", ".html", ".prop", ".py"}

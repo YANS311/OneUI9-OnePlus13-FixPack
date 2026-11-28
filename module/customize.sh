@@ -86,8 +86,8 @@ elif ! grep -q '^STEALTH_PROPS=' "$MODS_DIR/power.conf" 2>/dev/null; then
     ui_print "- Enabled STEALTH_PROPS=1 in existing power.conf"
 fi
 
-# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0 .. v1.3.0
-for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1 /sdcard/Download/OneUI9_v1.2.2 /sdcard/Download/OneUI9_v1.3.0; do
+# 6. Install staged binary/CSC patches atomically from /sdcard/Download/OneUI9_v1.1.0 .. v1.3.1
+for STAGE_DIR in /sdcard/Download/OneUI9_v1.1.0 /sdcard/Download/OneUI9_v1.2.0 /sdcard/Download/OneUI9_v1.2.1 /sdcard/Download/OneUI9_v1.2.2 /sdcard/Download/OneUI9_v1.3.0 /sdcard/Download/OneUI9_v1.3.1; do
     for f in cscfeature.xml telephony-common.jar imsservice.apk SystemUI.apk; do
         if [ -s "$STAGE_DIR/$f" ]; then
             cp -f "$STAGE_DIR/$f" "$MODS_DIR/$f.tmp" && mv -f "$MODS_DIR/$f.tmp" "$MODS_DIR/$f"
@@ -117,6 +117,7 @@ if [ -x "$MODS_DIR/oneui9_usb.sh" ]; then
     rm -f /data/local/tmp/.oneui9_usb.pid 2>/dev/null || true
     rmdir /data/local/tmp/.oneui9_usb.lock 2>/dev/null || true
     nohup "$MODS_DIR/oneui9_usb.sh" >/dev/null 2>&1 &
+    ( sleep 1; if [ "$(cat /sys/class/power_supply/usb/online 2>/dev/null)" = "1" ]; then svc usb setFunctions mtp >/dev/null 2>&1 || "$MODS_DIR/oneui9_usb.sh" --apply mtp,adb >/dev/null 2>&1 || true; fi ) >/dev/null 2>&1 &
     ui_print "- Activated USB ConfigFS MTP/PTP/ADB bridge live!"
 fi
 
